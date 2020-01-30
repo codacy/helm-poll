@@ -14,10 +14,6 @@ references:
       name: Install requirements
       command: |
         apk add git alpine-sdk
-        go get github.com/pborman/getopt
-        go get github.com/stretchr/testify/assert
-        go get github.com/jstemmer/go-junit-report
-
   attach_to_workspace: &attach_to_workspace
     attach_workspace:
       at: ~/workdir
@@ -57,7 +53,7 @@ jobs:
           command: make dist
       - <<: *persist_to_workspace
 
-  publish: # runs not using Workflows must have a `build` job as entry point
+  publish:
     <<: *default_golang_image
     steps:
       - <<: *attach_to_workspace
