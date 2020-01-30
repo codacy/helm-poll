@@ -1,0 +1,88 @@
+version: 2.1
+
+orbs:
+  codacy: codacy/base@2.2.1
+
+references:
+  default_golang_image: &default_golang_image
+    docker:
+      - image: golang:1.13.7-alpine3.11
+    working_directory: ~/workdir
+
+  get_requirements: &get_requirements
+    run:
+      name: Install requirements
+      command: |
+        apk add git alpine-sdk
+        go get github.com/pborman/getopt
+        go get github.com/stretchr/testify/assert
+  attach_to_workspace: &attach_to_workspace
+    attach_workspace:
+      at: ~/workdir
+
+  persist_to_workspace: &persist_to_workspace
+    persist_to_workspace:
+      root: ~/workdir
+      paths:
+        - "*"
+jobs:
+  test:
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+          name: "Run tests"
+          command: go test ./... -v
+      - <<: *persist_to_workspace
+
+  build:
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+          name: "Build"
+          command: go build .
+      - <<: *persist_to_workspace
+
+  publish: # runs not using Workflows must have a `build` job as entry point
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            export VERSION="$(cat .version)"
+            echo "Publishing version ${VERSION}"
+            ls -lisah ./_dist/
+            go get github.com/tcnksm/ghr
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              export RELEASE_TAG="latest"
+            else
+              export RELEASE_TAG="dev"
+            fi
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./_dist/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${RELEASE_TAG} ./_dist/
+
+workflows:
+  test_and_deploy:
+    jobs:
+      - codacy/checkout_and_version
+      - test:
+          requires:
+            - codacy/checkout_and_version
+      - build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - codacy/tag_version:
+          name: tag_version
+          requires:
+            - build
+      - publish:
+          context: CodacyGitHub
+          requires:
+            - tag_version

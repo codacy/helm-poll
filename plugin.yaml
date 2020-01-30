@@ -1,0 +1,5 @@
+name: "poll"
+version: "0.1.0"
+description: "Poll for installation availability of a release"
+ignoreFlags: false
+command: "go run poll.go"
