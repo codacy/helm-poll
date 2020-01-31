@@ -2,6 +2,8 @@
 
 [![CircleCI](https://circleci.com/gh/codacy/helm-poll/tree/master.svg?style=svg)](https://circleci.com/gh/codacy/helm-poll/tree/master)
 
+An helm plugin to poll for a release status.
+
 ## Project Goals
 
 As per the [Helm documentation](https://helm.sh/docs/helm/helm_status/), a release can have the following final statuses:
@@ -20,9 +22,27 @@ This means that once one of these states is met for the release, there is no on-
 
 The following command will install this plugin with your local copy of helm
 
-```bash
-helm plugin install https://github.com/codacy/helm-poll
+Choose the latest version from the releases and install the
+appropriate version for your OS:
+
+### Linux
+
+```sh
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-linux.tgz
 ```
+
+### MacOS
+
+```sh
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-macos.tgz
+```
+
+### Windows
+
+```sh
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-windows.tgz
+```
+
 
 ### Prerequisites
 
