@@ -43,17 +43,18 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
+
   build:
     <<: *default_golang_image
     steps:
       - <<: *attach_to_workspace
       - <<: *get_requirements
       - run:
-          name: "Build"
-          command: make dist
+          name: "Build and dist"
+          command: make build dist
       - <<: *persist_to_workspace
 
-  publish:
+  publish: # runs not using Workflows must have a `build` job as entry point
     <<: *default_golang_image
     steps:
       - <<: *attach_to_workspace
@@ -82,14 +83,15 @@ workflows:
       - build:
           requires:
             - test
+      - publish:
           filters:
             branches:
-              only: master
+              only:
+                - fmaster
+          context: CodacyGitHub
+          requires:
+            - build
       - codacy/tag_version:
           name: tag_version
           requires:
-            - build
-      - publish:
-          context: CodacyGitHub
-          requires:
-            - tag_version
+            - publish
