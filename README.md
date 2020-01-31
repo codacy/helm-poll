@@ -87,9 +87,9 @@ go test ./...
 
 ##### Defaults
 
-| Parameter          | Description                                                        | Default      | Required    |
-| ------------------ | ------------------------------------------------------------------ | ------------ | ----------- |
-| `--release`        | Name of the release to monitor                                     | `nil`        | True        |
-| `--timeout`        | Polling timeout in seconds                                         | `300`        | False       |
-| `--interval`       | Polling interval in seconds                                        | `5`          | False       |
+| Parameter     | Description                     | Default  | Required  |
+| ------------- | ------------------------------- | -------- | --------- |
+| `--release`   | Name of the release to monitor  | `nil`    | True      |
+| `--timeout`   | Polling timeout in seconds      | `300`    | False     |
+| `--interval`  | Polling interval in seconds     | `5`      | False     |
 

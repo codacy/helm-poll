@@ -14,20 +14,20 @@ import (
 
 var STATUSES = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"}
 
-const NUM_MOCKED_RELEASES = "NUM_MOCKED_RELEASES"
-const DEPLOYED_STATUS = "DEPLOYED"
-const INSTALLING_STATUS = "INSTALLING"
-const RELEASE_STATUSES = "RELEASE_STATUSES"
+const (
+	NUM_MOCKED_RELEASES = "NUM_MOCKED_RELEASES"
+	DEPLOYED_STATUS     = "DEPLOYED"
+	INSTALLING_STATUS   = "INSTALLING"
+	RELEASE_STATUSES    = "RELEASE_STATUSES"
+)
 
 type Runner interface {
-	Run(string, ...string) (string, error)
+	Run(string, ...string) string
 }
 
 type RealRunner struct{}
 
-var runner Runner
-
-func (r RealRunner) Run(command string, args ...string) (string, error) {
+func (r RealRunner) Run(command string, args ...string) string {
 	cmd := exec.Command(command, args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -35,7 +35,7 @@ func (r RealRunner) Run(command string, args ...string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return out.String(), err
+	return out.String()
 }
 
 type Release struct {
@@ -62,18 +62,15 @@ func (release Release) isAvailableStatus() bool {
 	return false
 }
 
-func GetRelease(releaseName string) Release {
-	out, err := runner.Run("helm", "list", "--output", "json")
-	if err != nil {
-		log.Fatal(err)
-	}
+func GetRelease(runner Runner, releaseName string) Release {
+	out := runner.Run("helm", "list", "--output", "json")
 	decoder := json.NewDecoder(strings.NewReader(out))
-	var json ReleaseList
-	err = decoder.Decode(&json)
+	var decodedJson ReleaseList
+	err := decoder.Decode(&decodedJson)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, release := range json.Releases {
+	for _, release := range decodedJson.Releases {
 		if release.Name == releaseName {
 			return release
 		}
@@ -81,20 +78,17 @@ func GetRelease(releaseName string) Release {
 	return Release{}
 }
 
-func PollRelease(releaseName string, timeout int, interval int) Release {
-	release := GetRelease(releaseName)
-	if (release != Release{}) {
-		for i := 1; i <= int(timeout/interval); i++ {
-			if release.isAvailableStatus() {
-				return release
-			} else {
-				fmt.Sprintf("%s is %s... waiting...", release.Name, release.Status)
-				time.Sleep(time.Duration(interval) * time.Second)
-				release = GetRelease(releaseName)
-			}
+func PollRelease(runner Runner, releaseName string, timeout int, interval int) Release {
+	for i := 1; i <= int(timeout/interval); i++ {
+		release := GetRelease(runner, releaseName)
+		if (release != Release{}) && release.isAvailableStatus() {
+			return release
 		}
-		fmt.Sprintf("%s took to long to become available... exiting...", release.Name)
+		fmt.Sprintf("%s is %s... waiting...", release.Name, release.Status)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
+	fmt.Sprintf("%s took to long to become available... exiting...", releaseName)
+
 	return Release{}
 }
 
@@ -119,9 +113,8 @@ func parseArgs() (*string, *int, *int) {
 }
 
 func main() {
-	runner = RealRunner{}
 	optRelease, optTimeout, optInterval := parseArgs()
-	release := PollRelease(*optRelease, *optTimeout, *optInterval)
+	release := PollRelease(RealRunner{}, *optRelease, *optTimeout, *optInterval)
 	marshal, err := json.Marshal(release)
 	if err != nil {
 		log.Println(err)

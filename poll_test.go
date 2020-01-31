@@ -16,7 +16,7 @@ type TestRunner struct {
 	status   string
 }
 
-func (t TestRunner) Run(command string, args ...string) (string, error) {
+func (t TestRunner) Run(command string, args ...string) string {
 	cs := []string{"-test.run=TestHelperProcess", "--"}
 	cmd := exec.Command(os.Args[0], cs...)
 	numberOfReleases := fmt.Sprintf("%s=%d", NUM_MOCKED_RELEASES, t.releases)
@@ -29,7 +29,7 @@ func (t TestRunner) Run(command string, args ...string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return out.String(), err
+	return out.String()
 }
 
 var mockStatusCount = 0
@@ -62,36 +62,36 @@ func TestHelperProcess(t *testing.T) {
 }
 
 func TestWhenReleaseExistsGetReleaseReturnsRelease(t *testing.T) {
-	runner = TestRunner{1, ""}
+	runner := TestRunner{1, ""}
 	expectedReleaseName := "fakerelease"
-	out := GetRelease(expectedReleaseName)
+	out := GetRelease(runner, expectedReleaseName)
 	assert.Equal(t, expectedReleaseName, out.Name)
 }
 
 func TestWhenPollingForNonExistingReleaseReturnsEmptyRelease(t *testing.T) {
-	runner = TestRunner{0, ""}
-	out := PollRelease("fakerelease", 10, 10)
+	runner := TestRunner{0, ""}
+	out := PollRelease(runner, "fakerelease", 10, 10)
 	assert.Equal(t, out, Release{})
 }
 
 func TestIfReleaseAvailableWhenPollingForExistingReleaseReturnsRelease(t *testing.T) {
-	runner = TestRunner{1, ""}
+	runner := TestRunner{1, ""}
 	expectedReleaseName := "fakerelease"
-	out := PollRelease(expectedReleaseName, 10, 10)
+	out := PollRelease(runner, expectedReleaseName, 10, 10)
 	assert.Equal(t, expectedReleaseName, out.Name)
 }
 
 func TestIfReleaseNotAvailableWhenPollingTimesoutForExistingReleaseReturnsEmptyRelease(t *testing.T) {
-	runner = TestRunner{1, INSTALLING_STATUS}
-	out := PollRelease("fakerelease", 10, 10)
+	runner := TestRunner{1, INSTALLING_STATUS}
+	out := PollRelease(runner, "fakerelease", 10, 10)
 	assert.Equal(t, Release{}, out)
 }
 
 func TestIfReleaseBecomesAvailableWhenPollingReturnsRelease(t *testing.T) {
 	for _, n := range STATUSES {
 		mockStatusCount = 0
-		runner = TestRunner{1, fmt.Sprintf("aRandomNotFinalState;%s", n)}
-		out := PollRelease("fakerelease", 10, 5)
+		runner := TestRunner{1, fmt.Sprintf("aRandomNotFinalState;%s", n)}
+		out := PollRelease(runner, "fakerelease", 10, 5)
 		assert.True(t, out.isAvailableStatus())
 	}
 }

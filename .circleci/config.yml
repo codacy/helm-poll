@@ -33,7 +33,7 @@ jobs:
       - <<: *get_requirements
       - run:
           name: "Run tests"
-          command: go test ./...
+          command: go test ./... -v
       - <<: *persist_to_workspace
 
   build:
@@ -89,4 +89,3 @@ workflows:
           name: tag_version
           requires:
             - change_plugin_version
-
