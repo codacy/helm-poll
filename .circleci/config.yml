@@ -1,0 +1,91 @@
+version: 2.1
+
+orbs:
+  codacy: codacy/base@2.2.1
+
+references:
+  default_golang_image: &default_golang_image
+    docker:
+      - image: golang:1.13.7-alpine3.11
+    working_directory: ~/workdir
+
+  get_requirements: &get_requirements
+    run:
+      name: Install requirements
+      command: |
+        apk add git alpine-sdk
+        go get github.com/pborman/getopt
+        go get github.com/stretchr/testify/assert
+  attach_to_workspace: &attach_to_workspace
+    attach_workspace:
+      at: ~/workdir
+
+  persist_to_workspace: &persist_to_workspace
+    persist_to_workspace:
+      root: ~/workdir
+      paths:
+        - "*"
+jobs:
+  test:
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+          name: "Run tests"
+          command: go test ./... -v
+      - <<: *persist_to_workspace
+
+  build:
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+          name: "Build"
+          command: go build .
+      - <<: *persist_to_workspace
+
+  change_plugin_version:
+    docker:
+      - image: codacy/ci-base:latest
+    working_directory: ~/workdir
+    steps:
+      - <<: *attach_to_workspace
+      - add_ssh_keys:
+          fingerprints:
+            - "df:83:d7:c7:d5:79:06:c2:3b:d1:fd:e2:a3:d1:12:c5"
+      - run:
+          name: add github known host
+          command: |
+            mkdir -p ~/.ssh
+            touch ~/.ssh/known_hosts
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - deploy:
+          name: Edit version in plugin.yaml
+          command: |
+            sed -E "s/version: \"[0-9].*\"/version: \"$(cat VERSION)\"/g" plugin.yaml.new
+            rm plugin.yaml
+            mv plugin.yaml.new plugin.yaml
+      - <<: *persist_to_workspace
+
+workflows:
+  test_and_deploy:
+    jobs:
+      - codacy/checkout_and_version
+      - test:
+          requires:
+            - codacy/checkout_and_version
+      - build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - change_plugin_version:
+          requires:
+            - build
+      - codacy/tag_version:
+          name: tag_version
+          requires:
+            - change_plugin_version
