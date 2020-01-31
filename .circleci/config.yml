@@ -64,7 +64,7 @@ jobs:
       - deploy:
           name: Edit version in plugin.yaml
           command: |
-            sed -E "s/version: \"[0-9].*\"/version: \"$(cat VERSION)\"/g" plugin.yaml.new
+            sed -E "s/version: \"[0-9].*\"/version: \"$(cat .version)\"/g" plugin.yaml.new
             rm plugin.yaml
             mv plugin.yaml.new plugin.yaml
       - <<: *persist_to_workspace
