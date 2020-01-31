@@ -2,4 +2,8 @@ name: "poll"
 version: "0.1.0"
 description: "Poll for installation availability of a release"
 ignoreFlags: false
-command: "go run poll.go"
+useTunnel: false
+command: "$HELM_PLUGIN_DIR/helm-poll"
+hooks:
+  install: chmod +x $HELM_PLUGIN_DIR/helm-poll
+  update: chmod +x $HELM_PLUGIN_DIR/helm-poll
