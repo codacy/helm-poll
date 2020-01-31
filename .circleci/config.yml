@@ -16,6 +16,8 @@ references:
         apk add git alpine-sdk
         go get github.com/pborman/getopt
         go get github.com/stretchr/testify/assert
+        go get github.com/jstemmer/go-junit-report
+
   attach_to_workspace: &attach_to_workspace
     attach_workspace:
       at: ~/workdir
@@ -28,13 +30,22 @@ references:
 jobs:
   test:
     <<: *default_golang_image
+    environment:
+      TEST_RESULTS: /tmp/test-results
     steps:
       - <<: *attach_to_workspace
       - <<: *get_requirements
       - run:
-          name: "Run tests"
-          command: go test ./... -v
+          name: "Run unit tests"
+          command: |
+            mkdir -p $TEST_RESULTS
+            make test | go-junit-report >> ${TEST_RESULTS}/go-test-report.xml
       - <<: *persist_to_workspace
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
 
   build:
     <<: *default_golang_image
@@ -43,14 +54,14 @@ jobs:
       - <<: *get_requirements
       - run:
           name: "Build"
-          command: go build .
+          command: make dist
       - <<: *persist_to_workspace
 
   publish: # runs not using Workflows must have a `build` job as entry point
     <<: *default_golang_image
     steps:
       - <<: *attach_to_workspace
-      - run:
+      - deploy:
           name: "Publish Release on GitHub"
           command: |
             export VERSION="$(cat .version)"
