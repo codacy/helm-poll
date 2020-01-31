@@ -14,8 +14,6 @@ references:
       name: Install requirements
       command: |
         apk add git alpine-sdk
-        go get github.com/pborman/getopt
-        go get github.com/stretchr/testify/assert
   attach_to_workspace: &attach_to_workspace
     attach_workspace:
       at: ~/workdir
@@ -28,13 +26,23 @@ references:
 jobs:
   test:
     <<: *default_golang_image
+    environment:
+      TEST_RESULTS: /tmp/test-results
     steps:
       - <<: *attach_to_workspace
       - <<: *get_requirements
       - run:
-          name: "Run tests"
-          command: go test ./... -v
+          name: "Run unit tests"
+          command: |
+            go get github.com/jstemmer/go-junit-report@v0.9.1
+            mkdir -p $TEST_RESULTS
+            make test | go-junit-report >> ${TEST_RESULTS}/go-test-report.xml
       - <<: *persist_to_workspace
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
 
   build:
     <<: *default_golang_image
@@ -42,32 +50,29 @@ jobs:
       - <<: *attach_to_workspace
       - <<: *get_requirements
       - run:
-          name: "Build"
-          command: go build .
+
+          name: "Build and dist"
+          command: make build dist
       - <<: *persist_to_workspace
 
-  change_plugin_version:
-    docker:
-      - image: codacy/ci-base:latest
-    working_directory: ~/workdir
+  publish: # runs not using Workflows must have a `build` job as entry point
+    <<: *default_golang_image
     steps:
       - <<: *attach_to_workspace
-      - add_ssh_keys:
-          fingerprints:
-            - "df:83:d7:c7:d5:79:06:c2:3b:d1:fd:e2:a3:d1:12:c5"
-      - run:
-          name: add github known host
-          command: |
-            mkdir -p ~/.ssh
-            touch ~/.ssh/known_hosts
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
       - deploy:
-          name: Edit version in plugin.yaml
+          name: "Publish Release on GitHub"
           command: |
-            sed -E "s/version: \"[0-9].*\"/version: \"$(cat .version)\"/g" plugin.yaml.new
-            rm plugin.yaml
-            mv plugin.yaml.new plugin.yaml
-      - <<: *persist_to_workspace
+            export VERSION="$(cat .version)"
+            echo "Publishing version ${VERSION}"
+            ls -lisah ./_dist/
+            go get github.com/tcnksm/ghr
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              export RELEASE_TAG="latest"
+            else
+              export RELEASE_TAG="dev"
+            fi
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./_dist/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${RELEASE_TAG} ./_dist/
 
 workflows:
   test_and_deploy:
@@ -79,13 +84,15 @@ workflows:
       - build:
           requires:
             - test
+      - publish:
           filters:
             branches:
-              only: master
-      - change_plugin_version:
+              only:
+                - fmaster
+          context: CodacyGitHub
           requires:
             - build
       - codacy/tag_version:
           name: tag_version
           requires:
-            - change_plugin_version
+            - publish
