@@ -34,6 +34,7 @@ jobs:
       - run:
           name: "Run unit tests"
           command: |
+            go get github.com/jstemmer/go-junit-report@v0.9.1
             mkdir -p $TEST_RESULTS
             make test | go-junit-report >> ${TEST_RESULTS}/go-test-report.xml
       - <<: *persist_to_workspace
