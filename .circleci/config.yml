@@ -92,7 +92,3 @@ workflows:
           context: CodacyGitHub
           requires:
             - build
-      - codacy/tag_version:
-          name: tag_version
-          requires:
-            - publish
