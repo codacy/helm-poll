@@ -88,7 +88,7 @@ workflows:
           filters:
             branches:
               only:
-                - fmaster
+                - master
           context: CodacyGitHub
           requires:
             - build
