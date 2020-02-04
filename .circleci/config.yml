@@ -1,0 +1,94 @@
+version: 2.1
+
+orbs:
+  codacy: codacy/base@2.2.1
+
+references:
+  default_golang_image: &default_golang_image
+    docker:
+      - image: golang:1.13.7-alpine3.11
+    working_directory: ~/workdir
+
+  get_requirements: &get_requirements
+    run:
+      name: Install requirements
+      command: |
+        apk add git alpine-sdk
+  attach_to_workspace: &attach_to_workspace
+    attach_workspace:
+      at: ~/workdir
+
+  persist_to_workspace: &persist_to_workspace
+    persist_to_workspace:
+      root: ~/workdir
+      paths:
+        - "*"
+jobs:
+  test:
+    <<: *default_golang_image
+    environment:
+      TEST_RESULTS: /tmp/test-results
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+          name: "Run unit tests"
+          command: |
+            go get github.com/jstemmer/go-junit-report@v0.9.1
+            mkdir -p $TEST_RESULTS
+            make test | go-junit-report >> ${TEST_RESULTS}/go-test-report.xml
+      - <<: *persist_to_workspace
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+
+  build:
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - <<: *get_requirements
+      - run:
+
+          name: "Build and dist"
+          command: make build dist
+      - <<: *persist_to_workspace
+
+  publish: # runs not using Workflows must have a `build` job as entry point
+    <<: *default_golang_image
+    steps:
+      - <<: *attach_to_workspace
+      - deploy:
+          name: "Publish Release on GitHub"
+          command: |
+            export VERSION="$(cat .version)"
+            echo "Publishing version ${VERSION}"
+            ls -lisah ./_dist/
+            go get github.com/tcnksm/ghr
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              export RELEASE_TAG="latest"
+            else
+              export RELEASE_TAG="dev"
+            fi
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./_dist/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${RELEASE_TAG} ./_dist/
+
+workflows:
+  test_and_deploy:
+    jobs:
+      - codacy/checkout_and_version
+      - test:
+          requires:
+            - codacy/checkout_and_version
+      - build:
+          requires:
+            - test
+      - publish:
+          filters:
+            branches:
+              only:
+                - master
+          context: CodacyGitHub
+          requires:
+            - build

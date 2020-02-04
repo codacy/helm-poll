@@ -2,44 +2,45 @@
 
 [![CircleCI](https://circleci.com/gh/codacy/helm-poll/tree/master.svg?style=svg)](https://circleci.com/gh/codacy/helm-poll/tree/master)
 
-A Helm plugin to poll for a release status.
+An helm plugin to poll for a release status.
 
 ## Project Goals
 
-As per the [Helm documentation](https://helm.sh/docs/helm/helm_status/), a release can have the following final states:
+As per the [Helm documentation](https://helm.sh/docs/helm/helm_status/), a release can have the following final status:
 
 ```go
 "UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"
 ```
 
-A final state means that the release does not have any ongoing operations, such as an upgrade.
+A final status is a state in which the release does not have any on-going operations, such as an upgrade.
 
-Therefore, to avoid concurrent installation problems, we have created this plugin that polls for the state of a given release until Helm returns one of the final states mentioned above.
+Therefore, to avoid concurrent installation problems, we have created this plugin that polls for the status of a given release until helm returns one of the statuses mentioned above.
 
-This means that once the release reaches one of these states, there is no ongoing installation and we are free to proceed.
+This means that once one of these states is met for the release, there is no on-going installation and we are free to proceed.
 
 ## Getting Started
 
-The following command will install this plugin with your local copy of Helm.
+The following command will install this plugin with your local copy of helm
 
-Choose the latest version from the releases and install the appropriate version for your OS:
+Choose the latest version from the releases and install the
+appropriate version for your OS:
 
 ### Linux
 
 ```sh
-helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-linux.tgz
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-linux.tgz
 ```
 
 ### MacOS
 
 ```sh
-helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-macos.tgz
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-macos.tgz
 ```
 
 ### Windows
 
 ```sh
-helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-windows.tgz
+$ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest/helm-poll-windows.tgz
 ```
 
 ### Prerequisites
@@ -47,7 +48,8 @@ helm plugin install https://github.com/codacy/helm-poll/releases/download/latest
 * [Helm](https://helm.sh/)
 * [GoLang](https://golang.org/)
 
-Please note that this plugin will poll the state of the releases in the cluster that is in your current kubeconfig context. Make sure you are pointing to the desired cluster before running the plugin.
+Please note that this plugin will poll in relation to the releases in the cluster that is in your current kubeconfig context.
+Make sure you are pointing to the desired cluster before running the plugin.
 
 ### Build and run
 
@@ -60,7 +62,7 @@ go build .
 You can then run the produced binary with
 
 ```bash
-$ ./poll
+./poll
 
 Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
      --help  Help
@@ -72,7 +74,7 @@ Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
              The timeout in seconds (default: 300)
 ```
 
-Upon success, the plugin will return the JSON output corresponding to the release:
+Upon success, the plugin will return the `json` output corresponding to the release:
 
 ```bash
 helm poll -r codacy-nightly
@@ -90,6 +92,8 @@ helm poll -r codacy-nightly
 }
 ```
 
+Because the output is `json`, you can pipe it through `jq` for fancier operations.
+
 Polling for a release that does not exist will return an empty release:
 
 ```json
@@ -103,8 +107,6 @@ Polling for a release that does not exist will return an empty release:
   "Namespace": ""
 }
 ```
-
-Because the output is JSON, you can pipe it through `jq` for fancier operations.
 
 ## Running the tests
 
@@ -137,6 +139,8 @@ go test ./... -v
 Codacy also helps keep track of Code Coverage, Code Duplication, and Code Complexity.
 
 Codacy supports PHP, Python, Ruby, Java, JavaScript, and Scala, among others.
+
+## Free for Open Source
 
 Codacy is free for Open Source projects.
 
