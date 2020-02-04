@@ -126,7 +126,7 @@ go test ./... -v
 
 [Codacy](https://www.codacy.com/) is an Automated Code Review Tool that monitors your technical debt, helps you improve your code quality, teaches best practices to your developers, and helps you save time in Code Reviews.
 
-### Among Codacy’s features
+### Among Codacy's features
 
 - Identify new Static Analysis issues
 - Commit and Pull Request Analysis with GitHub, BitBucket/Stash, GitLab (and also direct git repositories)
@@ -142,4 +142,4 @@ Codacy is free for Open Source projects.
 
 ## License
 
-helm-poll is available under the MIT license. See the LICENSE file for more info.
+helm-poll is available under the MIT license. See the [LICENSE](./LICENSE) file for more info.
