@@ -1,5 +1,6 @@
 # helm-poll
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f7afd18c84b64493bc31a5db5bc53513)](https://app.codacy.com/gh/codacy/helm-poll?utm_source=github.com&utm_medium=referral&utm_content=codacy/helm-poll&utm_campaign=Badge_Grade_Dashboard)
 [![CircleCI](https://circleci.com/gh/codacy/helm-poll/tree/master.svg?style=svg)](https://circleci.com/gh/codacy/helm-poll/tree/master)
 
 A Helm plugin to poll for a release status.
