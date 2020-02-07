@@ -12,19 +12,21 @@ import (
 	"time"
 )
 
-var STATUSES = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"}
+var statuses = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"}
 
 const (
-	NUM_MOCKED_RELEASES = "NUM_MOCKED_RELEASES"
-	DEPLOYED_STATUS     = "DEPLOYED"
-	INSTALLING_STATUS   = "INSTALLING"
-	RELEASE_STATUSES    = "RELEASE_STATUSES"
+	numberOfMockedReleases = "numberOfMockedReleases"
+	deployedStatus         = "DEPLOYED"
+	installingStatus       = "INSTALLING"
+	releaseStatuses        = "releaseStatuses"
 )
 
+// Runner is an interface to wrap around a exec.Command.Run
 type Runner interface {
 	Run(string, ...string) string
 }
 
+// RealRunner is a concrete implementation of Runner
 type RealRunner struct{}
 
 func (r RealRunner) Run(command string, args ...string) string {
@@ -38,6 +40,7 @@ func (r RealRunner) Run(command string, args ...string) string {
 	return out.String()
 }
 
+// Release is an Helm release
 type Release struct {
 	Name       string `json:Name`
 	Revision   int    `json:Revision`
@@ -48,13 +51,14 @@ type Release struct {
 	Namespace  string `json:Namespace`
 }
 
+// ReleaseList is a collection of Helm releases
 type ReleaseList struct {
 	Next     string    `json:Next`
 	Releases []Release `json:Releases`
 }
 
 func (release Release) isAvailableStatus() bool {
-	for _, status := range STATUSES {
+	for _, status := range statuses {
 		if release.Status == status {
 			return true
 		}
@@ -62,15 +66,15 @@ func (release Release) isAvailableStatus() bool {
 	return false
 }
 
-func GetRelease(runner Runner, releaseName string) Release {
+func getRelease(runner Runner, releaseName string) Release {
 	out := runner.Run("helm", "list", "--output", "json")
 	decoder := json.NewDecoder(strings.NewReader(out))
-	var decodedJson ReleaseList
-	err := decoder.Decode(&decodedJson)
+	var decodedJSON ReleaseList
+	err := decoder.Decode(&decodedJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, release := range decodedJson.Releases {
+	for _, release := range decodedJSON.Releases {
 		if release.Name == releaseName {
 			return release
 		}
@@ -78,9 +82,9 @@ func GetRelease(runner Runner, releaseName string) Release {
 	return Release{}
 }
 
-func PollRelease(runner Runner, releaseName string, timeout int, interval int) Release {
+func pollRelease(runner Runner, releaseName string, timeout int, interval int) Release {
 	for i := 1; i <= int(timeout/interval); i++ {
-		release := GetRelease(runner, releaseName)
+		release := getRelease(runner, releaseName)
 		if (release != Release{}) && release.isAvailableStatus() {
 			return release
 		}
@@ -114,7 +118,7 @@ func parseArgs() (*string, *int, *int) {
 
 func main() {
 	optRelease, optTimeout, optInterval := parseArgs()
-	release := PollRelease(RealRunner{}, *optRelease, *optTimeout, *optInterval)
+	release := pollRelease(RealRunner{}, *optRelease, *optTimeout, *optInterval)
 	marshal, err := json.Marshal(release)
 	if err != nil {
 		log.Println(err)
