@@ -21,7 +21,7 @@ func (t TestRunner) Run(command string, args ...string) string {
 	cmd := exec.Command(os.Args[0], cs...)
 	numberOfReleases := fmt.Sprintf("%s=%d", numberOfMockedReleases, t.releases)
 	status := t.mockReleaseStatus()
-	releaseStatuses := fmt.Sprintf("%s=%s", releaseStatuses, status)
+	releaseStatuses := fmt.Sprintf("%s=%s", releaseStates, status)
 	cmd.Env = []string{numberOfReleases, releaseStatuses}
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -35,7 +35,7 @@ func (t TestRunner) Run(command string, args ...string) string {
 var mockStatusCount = 0
 
 func (t TestRunner) mockReleaseStatus() string {
-	status := deployedStatus
+	status := deployedState
 	if t.status != "" {
 		statuses := strings.Split(t.status, ";")
 		if mockStatusCount > len(statuses)-1 {
@@ -49,7 +49,7 @@ func (t TestRunner) mockReleaseStatus() string {
 }
 
 func TestHelperProcess(t *testing.T) {
-	status := os.Getenv(releaseStatuses)
+	status := os.Getenv(releaseStates)
 	if os.Getenv(numberOfMockedReleases) == "0" {
 		fmt.Println(`{"Next":"","Releases":[]}`)
 	}
@@ -82,7 +82,7 @@ func TestIfReleaseAvailableWhenPollingForExistingReleaseReturnsRelease(t *testin
 }
 
 func TestIfReleaseNotAvailableWhenPollingTimesoutForExistingReleaseReturnsEmptyRelease(t *testing.T) {
-	runner := TestRunner{1, installingStatus}
+	runner := TestRunner{1, installingState}
 	out := pollRelease(runner, "fakerelease", 10, 10)
 	assert.Equal(t, Release{}, out)
 }

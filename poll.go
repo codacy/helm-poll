@@ -16,9 +16,9 @@ var statuses = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED
 
 const (
 	numberOfMockedReleases = "numberOfMockedReleases"
-	deployedStatus         = "DEPLOYED"
-	installingStatus       = "INSTALLING"
-	releaseStatuses        = "releaseStatuses"
+	deployedState          = "DEPLOYED"
+	installingState        = "INSTALLING"
+	releaseStates          = "releaseStates"
 )
 
 // Runner is an interface to wrap around a exec.Command.Run
