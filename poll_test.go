@@ -19,9 +19,9 @@ type TestRunner struct {
 func (t TestRunner) Run(command string, args ...string) string {
 	cs := []string{"-test.run=TestHelperProcess", "--"}
 	cmd := exec.Command(os.Args[0], cs...)
-	numberOfReleases := fmt.Sprintf("%s=%d", NUM_MOCKED_RELEASES, t.releases)
+	numberOfReleases := fmt.Sprintf("%s=%d", numberOfMockedReleases, t.releases)
 	status := t.mockReleaseStatus()
-	releaseStatuses := fmt.Sprintf("%s=%s", RELEASE_STATUSES, status)
+	releaseStatuses := fmt.Sprintf("%s=%s", releaseStates, status)
 	cmd.Env = []string{numberOfReleases, releaseStatuses}
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -35,7 +35,7 @@ func (t TestRunner) Run(command string, args ...string) string {
 var mockStatusCount = 0
 
 func (t TestRunner) mockReleaseStatus() string {
-	status := DEPLOYED_STATUS
+	status := deployedState
 	if t.status != "" {
 		statuses := strings.Split(t.status, ";")
 		if mockStatusCount > len(statuses)-1 {
@@ -49,14 +49,14 @@ func (t TestRunner) mockReleaseStatus() string {
 }
 
 func TestHelperProcess(t *testing.T) {
-	status := os.Getenv(RELEASE_STATUSES)
-	if os.Getenv(NUM_MOCKED_RELEASES) == "0" {
+	status := os.Getenv(releaseStates)
+	if os.Getenv(numberOfMockedReleases) == "0" {
 		fmt.Println(`{"Next":"","Releases":[]}`)
 	}
-	if os.Getenv(NUM_MOCKED_RELEASES) == "1" {
+	if os.Getenv(numberOfMockedReleases) == "1" {
 		fmt.Println(fmt.Sprintf(`{"Next":"","Releases":[{"Name":"fakerelease","Revision":45,"Updated":"Wed Jan 29 08:56:03 2020","Status":"%s","Chart":"codacy-0.5.0-NIGHTLY.29-01-2020","AppVersion":"0.5.0-NIGHTLY.29-01-2020","Namespace":"codacy-nightly"}]}`, status))
 	}
-	if os.Getenv(NUM_MOCKED_RELEASES) == "2" {
+	if os.Getenv(numberOfMockedReleases) == "2" {
 		fmt.Println(fmt.Sprintf(`{"Next":"","Releases":[{"Name":"fakerelease","Revision":45,"Updated":"Wed Jan 29 08:56:03 2020","Status":"%s","Chart":"codacy-0.5.0-NIGHTLY.29-01-2020","AppVersion":"0.5.0-NIGHTLY.29-01-2020","Namespace":"codacy-nightly"},{"Name":"kubernetes-dashboard","Revision":1,"Updated":"Wed Dec 11 16:07:45 2019","Status":"%s","Chart":"kubernetes-dashboard-1.10.1","AppVersion":"1.10.1","Namespace":"kube-system"}]}`, status, status))
 	}
 }
@@ -64,34 +64,34 @@ func TestHelperProcess(t *testing.T) {
 func TestWhenReleaseExistsGetReleaseReturnsRelease(t *testing.T) {
 	runner := TestRunner{1, ""}
 	expectedReleaseName := "fakerelease"
-	out := GetRelease(runner, expectedReleaseName)
+	out := getRelease(runner, expectedReleaseName)
 	assert.Equal(t, expectedReleaseName, out.Name)
 }
 
 func TestWhenPollingForNonExistingReleaseReturnsEmptyRelease(t *testing.T) {
 	runner := TestRunner{0, ""}
-	out := PollRelease(runner, "fakerelease", 10, 10)
+	out := pollRelease(runner, "fakerelease", 10, 10)
 	assert.Equal(t, out, Release{})
 }
 
 func TestIfReleaseAvailableWhenPollingForExistingReleaseReturnsRelease(t *testing.T) {
 	runner := TestRunner{1, ""}
 	expectedReleaseName := "fakerelease"
-	out := PollRelease(runner, expectedReleaseName, 10, 10)
+	out := pollRelease(runner, expectedReleaseName, 10, 10)
 	assert.Equal(t, expectedReleaseName, out.Name)
 }
 
 func TestIfReleaseNotAvailableWhenPollingTimesoutForExistingReleaseReturnsEmptyRelease(t *testing.T) {
-	runner := TestRunner{1, INSTALLING_STATUS}
-	out := PollRelease(runner, "fakerelease", 10, 10)
+	runner := TestRunner{1, installingState}
+	out := pollRelease(runner, "fakerelease", 10, 10)
 	assert.Equal(t, Release{}, out)
 }
 
 func TestIfReleaseBecomesAvailableWhenPollingReturnsRelease(t *testing.T) {
-	for _, n := range STATUSES {
+	for _, n := range statuses {
 		mockStatusCount = 0
 		runner := TestRunner{1, fmt.Sprintf("aRandomNotFinalState;%s", n)}
-		out := PollRelease(runner, "fakerelease", 10, 5)
+		out := pollRelease(runner, "fakerelease", 10, 5)
 		assert.True(t, out.isAvailableStatus())
 	}
 }
