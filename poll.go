@@ -84,10 +84,10 @@ func pollRelease(runner Runner, releaseName string, timeout int, interval int) R
 		if (release != Release{}) && release.isAvailableStatus() {
 			return release
 		}
-		_ = fmt.Sprintf("%s is %s... waiting...", releaseName, release.Status)
+		fmt.Println(fmt.Sprintf("%s is %s... waiting...", releaseName, release.Status))
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-	_ = fmt.Sprintf("%s took to long to become available... exiting...", releaseName)
+	fmt.Println(fmt.Sprintf("%s took to long to become available... exiting...", releaseName))
 
 	return Release{}
 }
