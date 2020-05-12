@@ -10,7 +10,7 @@ A Helm plugin to poll for a release status.
 As per the [Helm documentation](https://helm.sh/docs/helm/helm_status/), a release can have the following final states:
 
 ```go
-"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"
+"unknown", "deployed", "deleted", "superseded", "failed"
 ```
 
 A final state means that the release does not have any ongoing operations, such as an upgrade.
@@ -84,7 +84,7 @@ helm poll -r codacy-nightly
   "Name": "codacy-nightly",
   "Revision": 47,
   "Updated": "Thu Jan 30 13:41:56 2020",
-  "Status": "DEPLOYED",
+  "Status": "deployed",
   "Chart": "codacy-0.5.0-NIGHTLY.30-01-2020",
   "AppVersion": "0.5.0-NIGHTLY.30-01-2020",
   "Namespace": "codacy-nightly"

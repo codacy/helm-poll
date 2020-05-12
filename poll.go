@@ -12,12 +12,12 @@ import (
 	"time"
 )
 
-var statuses = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"}
+var statuses = [5]string{"unknown", "deployed", "deleted", "superseded", "failed"}
 
 const (
 	mockReleaseName = "mockReleaseName"
-	deployedState   = "DEPLOYED"
-	installingState = "INSTALLING"
+	deployedState   = "deployed"
+	installingState = "installing"
 	releaseStates   = "releaseStates"
 )
 
@@ -55,7 +55,7 @@ type ReleaseList []Release
 
 func (release Release) isAvailableStatus() bool {
 	for _, status := range statuses {
-		if release.Status == status {
+		if strings.ToLower(release.Status) == status {
 			return true
 		}
 	}
@@ -84,7 +84,7 @@ func pollRelease(runner Runner, releaseName string, timeout int, interval int) R
 		if (release != Release{}) && release.isAvailableStatus() {
 			return release
 		}
-		fmt.Println(fmt.Sprintf("%s is %s... waiting...", releaseName, release.Status))
+		fmt.Println(fmt.Sprintf("%s is %s... waiting...", releaseName, strings.ToLower(release.Status)))
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 	fmt.Println(fmt.Sprintf("%s took to long to become available... exiting...", releaseName))
