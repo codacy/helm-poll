@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var statuses = [5]string{"UNKNOWN", "DEPLOYED", "DELETED", "SUPERSEDED", "FAILED"}
+var statuses = [5]string{"unknown", "deployed", "deleted", "superseded", "failed"}
 
 const (
 	mockReleaseName = "mockReleaseName"
