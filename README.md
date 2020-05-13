@@ -63,23 +63,23 @@ You can then run the produced binary with
 ```bash
 $ ./poll
 
-Usage: helm-poll [--help] [-i value] [-r value] [-t value] [--verbose] [-w value] [parameters ...]
-     --help     Help
+Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
+     --debug  Run with debug messages on
+     --help  Help
  -i, --interval=value
-                The polling interval in seconds (default: 5)
+             The polling interval in seconds (default: 5)
+  -n, --namespace=value
+             Namespace where the release is installed. (default: "default")
  -r, --release=value
-                Release name to poll for.
+             Release name to poll for.
  -t, --timeout=value
-                The timeout in seconds (default: 300)
-     --verbose  Run with debug messages on
- -w, --with-namespace=value
-                Namespace where the release is installed. (default: "default")
+             The timeout in seconds (default: 300)
 ```
 
 Upon success, the plugin will return the JSON output corresponding to the release:
 
 ```bash
-helm poll -r codacy-nightly -w codacy
+helm poll -r codacy-nightly -n codacy
 ```
 
 ```json
@@ -120,13 +120,13 @@ go test ./... -v
 
 ### Defaults
 
-| Parameter          | Description                       | Default   | Required  |
-| ------------------ | -------------------------------   | --------  | --------- |
-| `--release`        | Name of the release to monitor    | `nil`     | True      |
-| `--with-namespace` | Namespace where the release lives | `default` | False     |
-| `--timeout`        | Polling timeout in seconds        | `300`     | False     |
-| `--interval`       | Polling interval in seconds       | `5`       | False     |
-| `--verbose`        | Enable debug messages             | `false`   | False     |
+| Parameter     | Description                       | Default   | Required  |
+| ------------- | -------------------------------   | --------  | --------- |
+| `--release`   | Name of the release to monitor    | `nil`     | True      |
+| `--namespace` | Namespace where the release lives | `default` | False     |
+| `--timeout`   | Polling timeout in seconds        | `300`     | False     |
+| `--interval`  | Polling interval in seconds       | `5`       | False     |
+| `--debug`     | Enable debug messages             | `false`   | False     |
 
 ## What is Codacy
 

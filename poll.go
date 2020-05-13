@@ -108,12 +108,12 @@ func pollRelease(runner Runner, releaseName string, namespace string, timeout in
 	return Release{}
 }
 
-func parseArgs() (*string, *string, *int, *int, *bool) {
+func parseArgs() (*string, *string, *int, *int, *string) {
 	optRelease := getopt.StringLong("release", 'r', "", "Release name to poll for.")
-	optNamespace := getopt.StringLong("with-namespace", 'w', "default", "Namespace where the release is installed. (default: \"default\")")
+	optNamespace := getopt.StringLong("namespace", 'n', os.Getenv("HELM_NAMESPACE"), "Namespace where the release is installed. (default: \"default\")")
 	optTimeout := getopt.IntLong("timeout", 't', 300, "The timeout in seconds (default: 300)")
 	optInterval := getopt.IntLong("interval", 'i', 5, "The polling interval in seconds (default: 5)")
-	optDebug := getopt.BoolLong("verbose", 0, "Run with debug messages on")
+	optDebug := getopt.StringLong("debug", 0, os.Getenv("HELM_DEBUG"), "Run with debug messages on")
 	optHelp := getopt.BoolLong("help", 0, "Help")
 
 	getopt.Parse()
@@ -134,7 +134,7 @@ func parseArgs() (*string, *string, *int, *int, *bool) {
 func main() {
 	optRelease, optNamespace, optTimeout, optInterval, optDebug := parseArgs()
 	runner := RealRunner{}
-	runner.isDebugEnabled = *optDebug
+	runner.isDebugEnabled = strings.ToLower(*optDebug) == "true"
 	release := pollRelease(runner, *optRelease, *optNamespace, *optTimeout, *optInterval)
 	marshal, err := json.Marshal(release)
 	if err != nil {
