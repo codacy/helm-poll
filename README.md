@@ -64,6 +64,7 @@ You can then run the produced binary with
 $ ./poll
 
 Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
+     --debug  Run with debug messages on
      --help  Help
  -i, --interval=value
              The polling interval in seconds (default: 5)
@@ -125,6 +126,7 @@ go test ./... -v
 | `--namespace` | Namespace where the release lives | `default` | False     |
 | `--timeout`   | Polling timeout in seconds        | `300`     | False     |
 | `--interval`  | Polling interval in seconds       | `5`       | False     |
+| `--debug`     | Enable debug messages             | `false`   | False     |
 
 ## What is Codacy
 
