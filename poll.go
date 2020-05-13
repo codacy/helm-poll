@@ -41,7 +41,7 @@ func (r RealRunner) LogDebug(message string) {
 func (r RealRunner) Run(command string, args ...string) string {
 	arguments := args
 	if r.isDebugEnabled {
-		r.LogDebug(fmt.Sprintf("enabling helm with --debug"))
+		r.LogDebug(fmt.Sprintf("Enabling helm with --debug"))
 		arguments = append(args, "--debug")
 	}
 	r.LogDebug(fmt.Sprintf("%s %s", command, arguments))
@@ -79,7 +79,7 @@ func (release Release) isAvailableStatus() bool {
 }
 
 func getRelease(runner Runner, releaseName string, namespace string) Release {
-	out := runner.Run("helm", "history", releaseName, "-n", namespace, "--max=1", "--output", "json")
+	out := runner.Run("helm", "history", releaseName, "--namespace", namespace, "--max=1", "--output", "json")
 	decoder := json.NewDecoder(strings.NewReader(out))
 	var decodedJSON ReleaseList
 	err := decoder.Decode(&decodedJSON)
@@ -110,10 +110,10 @@ func pollRelease(runner Runner, releaseName string, namespace string, timeout in
 
 func parseArgs() (*string, *string, *int, *int, *bool) {
 	optRelease := getopt.StringLong("release", 'r', "", "Release name to poll for.")
-	optNamespace := getopt.StringLong("namespace", 'n', "default", "Namespace where the release is installed. (default: \"default\")")
+	optNamespace := getopt.StringLong("with-namespace", 'w', "default", "Namespace where the release is installed. (default: \"default\")")
 	optTimeout := getopt.IntLong("timeout", 't', 300, "The timeout in seconds (default: 300)")
 	optInterval := getopt.IntLong("interval", 'i', 5, "The polling interval in seconds (default: 5)")
-	optDebug := getopt.BoolLong("debug", 0, "Run with debug messages on")
+	optDebug := getopt.BoolLong("verbose", 0, "Run with debug messages on")
 	optHelp := getopt.BoolLong("help", 0, "Help")
 
 	getopt.Parse()
