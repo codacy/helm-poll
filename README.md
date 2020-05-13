@@ -67,6 +67,8 @@ Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
      --help  Help
  -i, --interval=value
              The polling interval in seconds (default: 5)
+  -n, --namespace=value
+             Namespace where the release is installed. (default: "default")
  -r, --release=value
              Release name to poll for.
  -t, --timeout=value
@@ -76,7 +78,7 @@ Usage: poll [--help] [-i value] [-r value] [-t value] [parameters ...]
 Upon success, the plugin will return the JSON output corresponding to the release:
 
 ```bash
-helm poll -r codacy-nightly
+helm poll -r codacy-nightly -n codacy
 ```
 
 ```json
@@ -117,11 +119,12 @@ go test ./... -v
 
 ### Defaults
 
-| Parameter     | Description                     | Default  | Required  |
-| ------------- | ------------------------------- | -------- | --------- |
-| `--release`   | Name of the release to monitor  | `nil`    | True      |
-| `--timeout`   | Polling timeout in seconds      | `300`    | False     |
-| `--interval`  | Polling interval in seconds     | `5`      | False     |
+| Parameter     | Description                       | Default   | Required  |
+| ------------- | -------------------------------   | --------  | --------- |
+| `--release`   | Name of the release to monitor    | `nil`     | True      |
+| `--namespace` | Namespace where the release lives | `default` | False     |
+| `--timeout`   | Polling timeout in seconds        | `300`     | False     |
+| `--interval`  | Polling interval in seconds       | `5`       | False     |
 
 ## What is Codacy
 

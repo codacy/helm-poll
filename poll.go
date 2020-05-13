@@ -16,6 +16,7 @@ var statuses = [5]string{"unknown", "deployed", "deleted", "superseded", "failed
 
 const (
 	mockReleaseName = "mockReleaseName"
+	mockNamespace = "mockNamespace"
 	deployedState   = "deployed"
 	installingState = "installing"
 	releaseStates   = "releaseStates"
@@ -31,11 +32,14 @@ type RealRunner struct{}
 
 func (r RealRunner) Run(command string, args ...string) string {
 	cmd := exec.Command(command, args...)
+
 	var out bytes.Buffer
 	cmd.Stdout = &out
+
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Release not found in namespace.")
+		out.WriteString(fmt.Sprintf(`[{"revision":0,"updated":"","status":"","chart":"","appVersion":"","description":""}]`))
 	}
 	return out.String()
 }
@@ -62,8 +66,8 @@ func (release Release) isAvailableStatus() bool {
 	return false
 }
 
-func getRelease(runner Runner, releaseName string) Release {
-	out := runner.Run("helm", "history", releaseName, "--max=1", "--output", "json")
+func getRelease(runner Runner, releaseName string, namespace string) Release {
+	out := runner.Run("helm", "history", releaseName, "--namespace", namespace, "--max=1", "--output", "json")
 	decoder := json.NewDecoder(strings.NewReader(out))
 	var decodedJSON ReleaseList
 	err := decoder.Decode(&decodedJSON)
@@ -78,9 +82,9 @@ func getRelease(runner Runner, releaseName string) Release {
 	return decodedJSON[0]
 }
 
-func pollRelease(runner Runner, releaseName string, timeout int, interval int) Release {
+func pollRelease(runner Runner, releaseName string, namespace string, timeout int, interval int) Release {
 	for i := 1; i <= int(timeout/interval); i++ {
-		release := getRelease(runner, releaseName)
+		release := getRelease(runner, releaseName, namespace)
 		if (release != Release{}) && release.isAvailableStatus() {
 			return release
 		}
@@ -92,8 +96,9 @@ func pollRelease(runner Runner, releaseName string, timeout int, interval int) R
 	return Release{}
 }
 
-func parseArgs() (*string, *int, *int) {
+func parseArgs() (*string, *string, *int, *int) {
 	optRelease := getopt.StringLong("release", 'r', "", "Release name to poll for.")
+	optNamespace := getopt.StringLong("namespace", 'n', "default", "Namespace where the release is installed. (default: \"default\")")
 	optTimeout := getopt.IntLong("timeout", 't', 300, "The timeout in seconds (default: 300)")
 	optInterval := getopt.IntLong("interval", 'i', 5, "The polling interval in seconds (default: 5)")
 	optHelp := getopt.BoolLong("help", 0, "Help")
@@ -109,12 +114,12 @@ func parseArgs() (*string, *int, *int) {
 		getopt.Usage()
 		os.Exit(0)
 	}
-	return optRelease, optTimeout, optInterval
+	return optRelease, optNamespace, optTimeout, optInterval
 }
 
 func main() {
-	optRelease, optTimeout, optInterval := parseArgs()
-	release := pollRelease(RealRunner{}, *optRelease, *optTimeout, *optInterval)
+	optRelease, optNamespace, optTimeout, optInterval := parseArgs()
+	release := pollRelease(RealRunner{}, *optRelease, *optNamespace, *optTimeout, *optInterval)
 	marshal, err := json.Marshal(release)
 	if err != nil {
 		log.Println(err)
